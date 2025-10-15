@@ -1,6 +1,6 @@
 # Eye Flicker Detect 👁️
 
-A Progressive Web App for real-time eye blink frequency monitoring to help prevent eye strain during extended screen time.
+A Progressive Web App for real-time eye blink frequency monitoring to help prevent eye strain and dryness during extended screen time.
 
 ![React](https://img.shields.io/badge/React-18.3.1-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-blue)
