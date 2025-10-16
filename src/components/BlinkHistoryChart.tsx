@@ -167,7 +167,7 @@ const BlinkHistoryChart: React.FC<BlinkHistoryChartProps> = ({ blinkTimestamps }
   }
 
   return (
-    <Box sx={{ px: { xs: 1, sm: 2 }, py: 1 }}>
+    <Box sx={{ px: { xs: 1, sm: 2 }, py: 1, minHeight: 200, flexShrink: 0 }}>
       <Line data={chartData} options={options} />
     </Box>
   );

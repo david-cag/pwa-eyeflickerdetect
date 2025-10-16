@@ -18,9 +18,11 @@ function App() {
       <Box 
         sx={{ 
           minHeight: '100vh',
+          height: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          bgcolor: '#f5f5f5'
+          bgcolor: '#f5f5f5',
+          overflow: 'hidden'
         }}
       >
         <Container 

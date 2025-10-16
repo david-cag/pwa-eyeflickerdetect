@@ -176,11 +176,11 @@ const BlinkDetector: React.FC = () => {
   return (
     <Box 
       sx={{ 
-        mt: 2,
+        mt: { xs: 2, md: 0 },
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
         gap: 2,
-        height: { md: 'calc(100vh - 100px)' },
+        height: { md: 'calc(100vh - 140px)' },
         overflow: 'hidden'
       }}
     >
@@ -350,7 +350,8 @@ const BlinkDetector: React.FC = () => {
           flexDirection: 'column',
           gap: 1,
           overflow: 'auto',
-          minHeight: { xs: 'auto', md: 0 }
+          minHeight: { xs: 'auto', md: 0 },
+          minWidth: 0 // Prevent flex item from overflowing
         }}
       >
         <Box sx={{ px: { xs: 1, sm: 2 } }}>
