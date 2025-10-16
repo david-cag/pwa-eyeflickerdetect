@@ -340,16 +340,6 @@ const BlinkDetector: React.FC = () => {
             color={isPaused ? 'inherit' : faceDetected ? (currentEAR < earThreshold ? 'error' : 'success') : 'inherit'}
           />
         </Box>
-        
-        <BlinkThresholdSlider
-          value={lowBlinkThreshold}
-          onChange={setLowBlinkThreshold}
-        />
-        
-        <EARThresholdSlider
-          value={earThreshold}
-          onChange={setEarThreshold}
-        />
       </Box>
       
       {/* Right Column: Stats and Chart */}
@@ -376,6 +366,16 @@ const BlinkDetector: React.FC = () => {
         </Box>
         
         <BlinkHistoryChart blinkTimestamps={blinkHistory} />
+        
+        <BlinkThresholdSlider
+          value={lowBlinkThreshold}
+          onChange={setLowBlinkThreshold}
+        />
+        
+        <EARThresholdSlider
+          value={earThreshold}
+          onChange={setEarThreshold}
+        />
       </Box>
       
       <AlertDialog
