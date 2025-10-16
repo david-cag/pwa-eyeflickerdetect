@@ -154,9 +154,9 @@ The EAR progress bar provides visual feedback:
 ### EAR Threshold Slider
 - **Location**: Left sidebar, below "Low Blink Alert Threshold"
 - **Title**: "Eye Closure Sensitivity (EAR Threshold)"
-- **Range**: 0.15 - 0.30
+- **Range**: 0.15 - 0.35
 - **Step**: 0.01
-- **Marks**: 0.15, 0.20, 0.25, 0.30
+- **Marks**: 0.15, 0.20, 0.25, 0.30, 0.35
 - **Default**: 0.20
 
 ### Helper Text
