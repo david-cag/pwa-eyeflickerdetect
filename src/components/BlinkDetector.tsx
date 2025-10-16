@@ -187,7 +187,7 @@ const BlinkDetector: React.FC = () => {
       {/* Left Column: Video and Controls */}
       <Box 
         sx={{ 
-          flex: { xs: '1', md: '0 0 400px' },
+          flex: { xs: '1', md: '1' },
           display: 'flex',
           flexDirection: 'column',
           gap: 1

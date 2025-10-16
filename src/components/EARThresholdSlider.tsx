@@ -43,8 +43,8 @@ const EARThresholdSlider: React.FC<EARThresholdSliderProps> = ({ value, onChange
         />
       </Box>
       <Typography variant="caption" color="textSecondary">
-        <strong>Lower values</strong> (0.15-0.18): Less sensitive, requires eyes to close more. Reduces false positives.
-        <strong>Higher values</strong> (0.22-0.35): More sensitive, detects blinks when eyes partially close. Good for angled faces.
+        <strong>Lower values</strong> (0.15-0.18): Less sensitive, requires eyes to close more.<br/>
+        <strong>Higher values</strong> (0.22-0.35): More sensitive, detects blinks when eyes partially close. <br/>
         <strong>Default: 0.20</strong> - Balanced sensitivity for most situations.
       </Typography>
     </Box>
