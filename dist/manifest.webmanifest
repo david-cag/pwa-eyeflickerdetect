@@ -1,1 +1,1 @@
-{"name":"Eye Flicker Detect","short_name":"EyeFlicker","start_url":".","display":"standalone","background_color":"#ffffff","lang":"en","scope":"/","theme_color":"#1976d2","icons":[{"src":"favicon.ico","sizes":"48x48","type":"image/x-icon"}]}
+{"name":"Eye Flicker Detect","short_name":"EyeFlicker","start_url":".","display":"standalone","background_color":"#ffffff","lang":"en","scope":"/pwa-eyeflickerdetect/","theme_color":"#1976d2","icons":[{"src":"favicon.ico","sizes":"48x48","type":"image/x-icon"}]}
