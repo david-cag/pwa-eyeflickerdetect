@@ -24,7 +24,12 @@ function calculateEAR(eyeLandmarks: any[]): number {
   return ear;
 }
 
-export function useBlinkDetection(videoRef: React.RefObject<HTMLVideoElement>, isPaused: boolean, lowBlinkThreshold: number) {
+export function useBlinkDetection(
+  videoRef: React.RefObject<HTMLVideoElement>, 
+  isPaused: boolean, 
+  lowBlinkThreshold: number,
+  earThreshold: number = 0.2
+) {
   const [blinkCount, setBlinkCount] = useState(0);
   const [blinkHistory, setBlinkHistory] = useState<number[]>([]);
   const [blinkRate, setBlinkRate] = useState(0);
@@ -37,7 +42,6 @@ export function useBlinkDetection(videoRef: React.RefObject<HTMLVideoElement>, i
   const blinkTimestampsRef = useRef<number[]>([]);
   const isBlinkingRef = useRef<boolean>(false);
   const lastAlertTimeRef = useRef<number>(0);
-  const EAR_THRESHOLD = 0.2; // Threshold for detecting closed eyes
   const CONSECUTIVE_FRAMES = 2; // Number of consecutive frames below threshold to confirm blink
   const ALERT_COOLDOWN = 60000; // 1 minute between alerts
 
@@ -122,7 +126,7 @@ export function useBlinkDetection(videoRef: React.RefObject<HTMLVideoElement>, i
       setCurrentEAR(avgEAR);
       
       // Blink detection logic
-      if (avgEAR < EAR_THRESHOLD) {
+      if (avgEAR < earThreshold) {
         framesBelowThreshold++;
         
         // If eyes have been closed for enough consecutive frames and not already blinking
@@ -172,7 +176,7 @@ export function useBlinkDetection(videoRef: React.RefObject<HTMLVideoElement>, i
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       faceMeshInstance?.close();
     };
-  }, [videoRef, isPaused, lowBlinkThreshold]);
+  }, [videoRef, isPaused, lowBlinkThreshold, earThreshold]);
 
   return { blinkCount, blinkRate, blinkHistory, faceMeshResults, currentEAR, lowBlinkAlert, setLowBlinkAlert, faceDetected, faceBoundingBox };
 }

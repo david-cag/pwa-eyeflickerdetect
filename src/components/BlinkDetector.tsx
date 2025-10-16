@@ -4,34 +4,65 @@ import { PlayArrow, Pause } from '@mui/icons-material';
 import { useBlinkDetection } from '../hooks/useBlinkDetection';
 import AlertDialog from './AlertDialog';
 import BlinkThresholdSlider from './BlinkThresholdSlider';
+import EARThresholdSlider from './EARThresholdSlider';
 import BlinkHistoryChart from './BlinkHistoryChart';
+
+type CameraStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'error';
 
 const BlinkDetector: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPaused, setIsPaused] = useState(false); // Start with detection active
   const [lowBlinkThreshold, setLowBlinkThreshold] = useState(10);
-  const { blinkCount, blinkRate, blinkHistory, faceMeshResults, currentEAR, lowBlinkAlert, setLowBlinkAlert, faceDetected, faceBoundingBox } = useBlinkDetection(videoRef, isPaused, lowBlinkThreshold);
+  const [earThreshold, setEarThreshold] = useState(0.20);
+  const { blinkCount, blinkRate, blinkHistory, faceMeshResults, currentEAR, lowBlinkAlert, setLowBlinkAlert, faceDetected, faceBoundingBox } = useBlinkDetection(videoRef, isPaused, lowBlinkThreshold, earThreshold);
   const [autoZoom, setAutoZoom] = useState(true);
+  const [cameraStatus, setCameraStatus] = useState<CameraStatus>('idle');
+  const [cameraError, setCameraError] = useState<string>('');
 
-  useEffect(() => {
-    async function setupCamera() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
-            facingMode: 'user', 
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          },
-          audio: false
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
+  const setupCamera = async () => {
+    setCameraStatus('requesting');
+    setCameraError('');
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          facingMode: 'user', 
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setCameraStatus('granted');
+      }
+    } catch (err) {
+      console.error('Error accessing camera:', err);
+      
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          setCameraStatus('denied');
+          setCameraError('Camera access denied. Please grant permission to use this app.');
+        } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+          setCameraStatus('error');
+          setCameraError('No camera found on this device.');
+        } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+          setCameraStatus('error');
+          setCameraError('Camera is already in use by another application.');
+        } else {
+          setCameraStatus('error');
+          setCameraError(`Camera error: ${err.message}`);
         }
-      } catch (err) {
-        console.error('Error accessing camera:', err);
+      } else {
+        setCameraStatus('error');
+        setCameraError('Unknown camera error occurred.');
       }
     }
+  };
+
+  useEffect(() => {
     setupCamera();
     return () => {
       if (videoRef.current && videoRef.current.srcObject) {
@@ -214,6 +245,50 @@ const BlinkDetector: React.FC = () => {
           </Box>
         </Box>
         
+        {/* Camera Permission Status */}
+        {cameraStatus !== 'granted' && (
+          <Box 
+            sx={{ 
+              p: 2, 
+              bgcolor: cameraStatus === 'denied' ? 'error.light' : 
+                       cameraStatus === 'error' ? 'warning.light' : 
+                       'info.light',
+              borderRadius: 1,
+              color: cameraStatus === 'denied' || cameraStatus === 'error' ? 'error.contrastText' : 'info.contrastText'
+            }}
+          >
+            <Typography variant="subtitle2" gutterBottom>
+              {cameraStatus === 'requesting' && '📷 Requesting camera access...'}
+              {cameraStatus === 'denied' && '🚫 Camera Access Denied'}
+              {cameraStatus === 'error' && '⚠️ Camera Error'}
+              {cameraStatus === 'idle' && 'Camera not initialized'}
+            </Typography>
+            {cameraError && (
+              <>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  {cameraError}
+                </Typography>
+                {cameraStatus === 'denied' && (
+                  <Typography variant="caption" sx={{ display: 'block', mb: 1 }}>
+                    To enable camera access:
+                    <br />• Click the camera icon in your browser's address bar
+                    <br />• Or go to browser Settings → Privacy → Camera
+                    <br />• Then click "Try Again" below
+                  </Typography>
+                )}
+                <Button 
+                  variant="contained" 
+                  size="small" 
+                  onClick={setupCamera}
+                  sx={{ mt: 1 }}
+                >
+                  Try Again
+                </Button>
+              </>
+            )}
+          </Box>
+        )}
+        
         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Button
             variant="contained"
@@ -260,15 +335,20 @@ const BlinkDetector: React.FC = () => {
           </Typography>
           <LinearProgress 
             variant="determinate" 
-            value={isPaused ? 0 : faceDetected ? Math.min(currentEAR * 200, 100) : 0} 
+            value={isPaused ? 0 : faceDetected ? Math.min((currentEAR / earThreshold) * 100, 100) : 0} 
             sx={{ height: 6, borderRadius: 4 }}
-            color={isPaused ? 'inherit' : faceDetected ? (currentEAR < 0.2 ? 'error' : 'success') : 'inherit'}
+            color={isPaused ? 'inherit' : faceDetected ? (currentEAR < earThreshold ? 'error' : 'success') : 'inherit'}
           />
         </Box>
         
         <BlinkThresholdSlider
           value={lowBlinkThreshold}
           onChange={setLowBlinkThreshold}
+        />
+        
+        <EARThresholdSlider
+          value={earThreshold}
+          onChange={setEarThreshold}
         />
       </Box>
       

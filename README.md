@@ -19,7 +19,8 @@ A Progressive Web App for real-time eye blink frequency monitoring to help preve
 ### User Controls
 - **Pause/Resume**: Manual control over detection
 - **Zoom Toggle**: Turn auto-zoom ON/OFF
-- **Threshold Slider**: Customize alert sensitivity
+- **Blink Alert Threshold**: Customize alert sensitivity (5-20 blinks/min)
+- **EAR Threshold**: Adjust eye closure sensitivity (0.15-0.30) for better detection with angled faces
 - **Visual Feedback**: Canvas overlay with face mesh (green) and eye landmarks (red)
 
 ### Notifications
@@ -103,8 +104,15 @@ Where p1-p6 are eye landmark points from MediaPipe Face Mesh.
 **Detection Logic:**
 1. Calculate EAR for both eyes
 2. Average the values
-3. If EAR < 0.2 for 2 consecutive frames → Blink detected
+3. If EAR < threshold (default 0.2, configurable 0.15-0.30) for 2 consecutive frames → Blink detected
 4. Track timestamps and calculate blinks/minute
+
+**Configurable EAR Threshold:**
+- **Lower values (0.15-0.18)**: More sensitive, better for angled faces, may have more false positives
+- **Default (0.20)**: Balanced sensitivity for most situations
+- **Higher values (0.22-0.30)**: Less sensitive, requires fuller eye closure, fewer false positives
+
+See [EAR Threshold Guide](docs/EAR_THRESHOLD_GUIDE.md) for detailed configuration help.
 
 ### Auto-Zoom Feature
 
@@ -126,7 +134,8 @@ Where p1-p6 are eye landmark points from MediaPipe Face Mesh.
 ### Main Components
 - `BlinkDetector.tsx` - Main component with video, canvas, and controls
 - `BlinkHistoryChart.tsx` - 10-minute blink rate visualization
-- `BlinkThresholdSlider.tsx` - Alert threshold configuration
+- `BlinkThresholdSlider.tsx` - Alert threshold configuration (5-20 blinks/min)
+- `EARThresholdSlider.tsx` - Eye closure sensitivity configuration (0.15-0.30)
 - `AlertDialog.tsx` - Sound and system notifications
 
 ### Custom Hooks
