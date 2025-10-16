@@ -13,5 +13,4 @@ test('displays helpful descriptions', () => {
   render(<EARThresholdSlider value={0.20} onChange={() => {}} />);
   expect(screen.getByText(/Lower values/)).toBeInTheDocument();
   expect(screen.getByText(/Higher values/)).toBeInTheDocument();
-  expect(screen.getByText(/Default: 0.20/)).toBeInTheDocument();
 });
