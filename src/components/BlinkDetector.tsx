@@ -9,16 +9,63 @@ import BlinkHistoryChart from './BlinkHistoryChart';
 
 type CameraStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'error';
 
+// LocalStorage utility functions
+const STORAGE_KEYS = {
+  LOW_BLINK_THRESHOLD: 'pwa-eyeflicker-lowBlinkThreshold',
+  EAR_THRESHOLD: 'pwa-eyeflicker-earThreshold',
+  AUTO_ZOOM: 'pwa-eyeflicker-autoZoom'
+};
+
+const getStoredValue = (key: string, defaultValue: any) => {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  } catch (error) {
+    console.warn(`Failed to read ${key} from localStorage:`, error);
+    return defaultValue;
+  }
+};
+
+const setStoredValue = (key: string, value: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Failed to save ${key} to localStorage:`, error);
+  }
+};
+
 const BlinkDetector: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isPaused, setIsPaused] = useState(false); // Start with detection active
-  const [lowBlinkThreshold, setLowBlinkThreshold] = useState(10);
-  const [earThreshold, setEarThreshold] = useState(0.20);
+  const [isPaused, setIsPaused] = useState(true); // Start paused until camera is ready
+  
+  // Initialize with localStorage values or defaults
+  const [lowBlinkThreshold, setLowBlinkThreshold] = useState(() => 
+    getStoredValue(STORAGE_KEYS.LOW_BLINK_THRESHOLD, 10)
+  );
+  const [earThreshold, setEarThreshold] = useState(() => 
+    getStoredValue(STORAGE_KEYS.EAR_THRESHOLD, 0.25)
+  );
+  const [autoZoom, setAutoZoom] = useState(() => 
+    getStoredValue(STORAGE_KEYS.AUTO_ZOOM, true)
+  );
+  
   const { blinkCount, blinkRate, blinkHistory, faceMeshResults, currentEAR, lowBlinkAlert, setLowBlinkAlert, faceDetected, faceBoundingBox } = useBlinkDetection(videoRef, isPaused, lowBlinkThreshold, earThreshold);
-  const [autoZoom, setAutoZoom] = useState(true);
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>('idle');
   const [cameraError, setCameraError] = useState<string>('');
+
+  // Save to localStorage when values change
+  useEffect(() => {
+    setStoredValue(STORAGE_KEYS.LOW_BLINK_THRESHOLD, lowBlinkThreshold);
+  }, [lowBlinkThreshold]);
+
+  useEffect(() => {
+    setStoredValue(STORAGE_KEYS.EAR_THRESHOLD, earThreshold);
+  }, [earThreshold]);
+
+  useEffect(() => {
+    setStoredValue(STORAGE_KEYS.AUTO_ZOOM, autoZoom);
+  }, [autoZoom]);
 
   const setupCamera = async () => {
     setCameraStatus('requesting');
@@ -37,6 +84,19 @@ const BlinkDetector: React.FC = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setCameraStatus('granted');
+        
+        // Auto-start detection when video begins playing
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play().then(() => {
+              // Start detection automatically once video is playing
+              setTimeout(() => {
+                setIsPaused(false);
+                console.log('Auto-starting blink detection...');
+              }, 1000); // Give MediaPipe time to initialize
+            });
+          }
+        };
       }
     } catch (err) {
       console.error('Error accessing camera:', err);
@@ -312,7 +372,7 @@ const BlinkDetector: React.FC = () => {
                 : '❌ No Face'}
           </Typography>
           <Typography variant="caption" display="block" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, mb: 0.5 }}>
-            EAR: {currentEAR.toFixed(3)} {isPaused ? '⏸️' : faceDetected ? (currentEAR < 0.2 ? '👁️ CLOSED' : '👀 OPEN') : '⏸️'}
+            EAR: {currentEAR.toFixed(3)} {isPaused ? '⏸️' : faceDetected ? (currentEAR < earThreshold ? '👁️ CLOSED' : '👀 OPEN') : '⏸️'}
           </Typography>
           <LinearProgress 
             variant="determinate" 
