@@ -14,7 +14,7 @@ const EARThresholdSlider: React.FC<EARThresholdSliderProps> = ({ value, onChange
   return (
     <Box sx={{ px: { xs: 1, sm: 2 }, py: 2 }}>
       <Typography variant="subtitle2" gutterBottom>
-        Eye Closure Sensitivity (EAR Threshold)
+        Eye Closure Sensitivity (EAR Threshold) 💾
       </Typography>
       <Box sx={{ px: 1 }}>
         <Slider
@@ -47,6 +47,7 @@ const EARThresholdSlider: React.FC<EARThresholdSliderProps> = ({ value, onChange
       <Typography variant="caption" color="textSecondary">
         <strong>Lower values (0.15-0.25)</strong>: Less sensitive, requires eyes to close more. 
         <strong>Higher values (0.30-0.45)</strong>: More sensitive, detects blinks when eyes partially close or when looking sideways.
+        <br /><em>Settings are automatically saved.</em>
       </Typography>
     </Box>
   );

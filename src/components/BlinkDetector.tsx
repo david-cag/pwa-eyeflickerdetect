@@ -9,16 +9,63 @@ import BlinkHistoryChart from './BlinkHistoryChart';
 
 type CameraStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'error';
 
+// LocalStorage utility functions
+const STORAGE_KEYS = {
+  LOW_BLINK_THRESHOLD: 'pwa-eyeflicker-lowBlinkThreshold',
+  EAR_THRESHOLD: 'pwa-eyeflicker-earThreshold',
+  AUTO_ZOOM: 'pwa-eyeflicker-autoZoom'
+};
+
+const getStoredValue = (key: string, defaultValue: any) => {
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  } catch (error) {
+    console.warn(`Failed to read ${key} from localStorage:`, error);
+    return defaultValue;
+  }
+};
+
+const setStoredValue = (key: string, value: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Failed to save ${key} to localStorage:`, error);
+  }
+};
+
 const BlinkDetector: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPaused, setIsPaused] = useState(true); // Start paused until camera is ready
-  const [lowBlinkThreshold, setLowBlinkThreshold] = useState(10);
-  const [earThreshold, setEarThreshold] = useState(0.25); // Updated default to match the new sensitivity
+  
+  // Initialize with localStorage values or defaults
+  const [lowBlinkThreshold, setLowBlinkThreshold] = useState(() => 
+    getStoredValue(STORAGE_KEYS.LOW_BLINK_THRESHOLD, 10)
+  );
+  const [earThreshold, setEarThreshold] = useState(() => 
+    getStoredValue(STORAGE_KEYS.EAR_THRESHOLD, 0.25)
+  );
+  const [autoZoom, setAutoZoom] = useState(() => 
+    getStoredValue(STORAGE_KEYS.AUTO_ZOOM, true)
+  );
+  
   const { blinkCount, blinkRate, blinkHistory, faceMeshResults, currentEAR, lowBlinkAlert, setLowBlinkAlert, faceDetected, faceBoundingBox } = useBlinkDetection(videoRef, isPaused, lowBlinkThreshold, earThreshold);
-  const [autoZoom, setAutoZoom] = useState(true);
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>('idle');
   const [cameraError, setCameraError] = useState<string>('');
+
+  // Save to localStorage when values change
+  useEffect(() => {
+    setStoredValue(STORAGE_KEYS.LOW_BLINK_THRESHOLD, lowBlinkThreshold);
+  }, [lowBlinkThreshold]);
+
+  useEffect(() => {
+    setStoredValue(STORAGE_KEYS.EAR_THRESHOLD, earThreshold);
+  }, [earThreshold]);
+
+  useEffect(() => {
+    setStoredValue(STORAGE_KEYS.AUTO_ZOOM, autoZoom);
+  }, [autoZoom]);
 
   const setupCamera = async () => {
     setCameraStatus('requesting');
