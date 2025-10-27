@@ -1,5 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import * as faceMesh from '@mediapipe/face_mesh';
+
+// Type definitions for MediaPipe
+interface MediaPipeResults {
+  multiFaceLandmarks?: Array<Array<{x: number, y: number, z: number}>>;
+  image?: any;
+}
+
+interface MediaPipeFaceMesh {
+  setOptions(options: any): void;
+  onResults(callback: (results: MediaPipeResults) => void): void;
+  initialize(): Promise<void>;
+  send(inputs: { image: HTMLVideoElement }): void;
+  close(): void;
+}
 
 // Eye landmark indices for MediaPipe FaceMesh
 const LEFT_EYE_INDICES = [33, 160, 158, 133, 153, 144];
@@ -33,7 +46,7 @@ export function useBlinkDetection(
   const [blinkCount, setBlinkCount] = useState(0);
   const [blinkHistory, setBlinkHistory] = useState<number[]>([]);
   const [blinkRate, setBlinkRate] = useState(0);
-  const [faceMeshResults, setFaceMeshResults] = useState<faceMesh.Results | null>(null);
+  const [faceMeshResults, setFaceMeshResults] = useState<MediaPipeResults | null>(null);
   const [currentEAR, setCurrentEAR] = useState<number>(0);
   const [lowBlinkAlert, setLowBlinkAlert] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
@@ -47,26 +60,67 @@ export function useBlinkDetection(
 
   useEffect(() => {
     if (!videoRef.current) return;
-    let faceMeshInstance: faceMesh.FaceMesh | null = null;
+    let faceMeshInstance: MediaPipeFaceMesh | null = null;
     let animationFrameId: number;
     let framesBelowThreshold = 0;
 
     async function setupFaceMesh() {
-      faceMeshInstance = new faceMesh.FaceMesh({
-        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
-      });
-      faceMeshInstance.setOptions({
-        maxNumFaces: 1,
-        refineLandmarks: true,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5,
-      });
-      faceMeshInstance.onResults(onResults);
-      await faceMeshInstance.initialize();
-      detectFrame();
+      try {
+        let FaceMesh: any = null;
+        
+        // Try the most compatible approach first - CDN loading
+        if (!(window as any).FaceMesh) {
+          // Load MediaPipe from CDN to avoid module bundling issues
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js';
+          script.crossOrigin = 'anonymous';
+          document.head.appendChild(script);
+          
+          await new Promise((resolve, reject) => {
+            script.onload = () => {
+              console.log('MediaPipe FaceMesh loaded from CDN');
+              resolve(void 0);
+            };
+            script.onerror = (error) => {
+              console.error('Failed to load MediaPipe from CDN:', error);
+              reject(error);
+            };
+            setTimeout(() => reject(new Error('CDN loading timeout')), 15000);
+          });
+        }
+        
+        FaceMesh = (window as any).FaceMesh;
+        
+        if (!FaceMesh) {
+          throw new Error('FaceMesh constructor not available after CDN load');
+        }
+        
+        faceMeshInstance = new FaceMesh({
+          locateFile: (file: string) => {
+            // Use the same CDN version for consistency
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
+          },
+        });
+        
+        if (!faceMeshInstance) {
+          throw new Error('Failed to create FaceMesh instance');
+        }
+        
+        faceMeshInstance.setOptions({
+          maxNumFaces: 1,
+          refineLandmarks: true,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
+        faceMeshInstance.onResults(onResults);
+        await faceMeshInstance.initialize();
+        detectFrame();
+      } catch (error) {
+        console.error('Error setting up FaceMesh:', error);
+      }
     }
 
-    function onResults(results: faceMesh.Results) {
+    function onResults(results: MediaPipeResults) {
       // Store results for visualization
       setFaceMeshResults(results);
       

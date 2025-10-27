@@ -89,7 +89,7 @@ const BlinkDetector: React.FC = () => {
     // Draw face mesh landmarks
     if (faceMeshResults.multiFaceLandmarks) {
       for (const landmarks of faceMeshResults.multiFaceLandmarks) {
-        // Draw all face landmarks
+        // Draw all face landmarks - no mirroring in context since CSS handles it
         ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
         for (const landmark of landmarks) {
           ctx.beginPath();
@@ -148,29 +148,10 @@ const BlinkDetector: React.FC = () => {
     return transform;
   };
 
-  // Get canvas transform - same as video but without the negative scaleX for proper overlay
+  // Get canvas transform - should match video transform exactly for perfect overlay
   const getCanvasTransform = () => {
-    let transform = 'scaleX(-1)'; // Mirror effect to match video
-    
-    if (autoZoom && faceBoundingBox && faceDetected) {
-      const { x, y, width, height } = faceBoundingBox;
-      
-      // Calculate zoom to fill the frame with the face
-      const zoomX = 1 / width;
-      const zoomY = 1 / height;
-      const zoom = Math.min(zoomX, zoomY, 2.5); // Cap at 2.5x zoom
-      
-      // Calculate translation to center the face
-      const centerX = x + width / 2;
-      const centerY = y + height / 2;
-      const translateX = (0.5 - centerX) * 100;
-      const translateY = (0.5 - centerY) * 100;
-      
-      // Same transform as video for perfect overlay
-      transform = `scaleX(-${zoom}) scaleY(${zoom}) translate(${translateX}%, ${translateY}%)`;
-    }
-    
-    return transform;
+    // Use exactly the same transform as video for perfect alignment
+    return getVideoTransform();
   };
 
   return (
