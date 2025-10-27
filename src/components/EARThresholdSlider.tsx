@@ -14,7 +14,7 @@ const EARThresholdSlider: React.FC<EARThresholdSliderProps> = ({ value, onChange
   return (
     <Box sx={{ px: { xs: 1, sm: 2 }, py: 2 }}>
       <Typography variant="subtitle2" gutterBottom>
-        Eye Closure Sensitivity (EAR Threshold) 💾
+        Eye Closure Sensitivity (EAR Threshold)
       </Typography>
       <Box sx={{ px: 1 }}>
         <Slider

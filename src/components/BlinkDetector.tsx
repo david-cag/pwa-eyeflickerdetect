@@ -217,21 +217,21 @@ const BlinkDetector: React.FC = () => {
   return (
     <Box 
       sx={{ 
-        mt: { xs: 2, md: 0 },
+        flex: 1,
         display: 'flex',
-        flexDirection: { xs: 'column', md: 'row' },
-        gap: 2,
-        height: { md: 'calc(100vh - 140px)' },
-        overflow: 'hidden'
+        flexDirection: { xs: 'column', lg: 'row' },
+        gap: { xs: 1, sm: 2 },
+        minHeight: 0 // Allow flex children to shrink
       }}
     >
       {/* Left Column: Video and Controls */}
       <Box 
         sx={{ 
-          flex: { xs: '1', md: '1' },
+          flex: { xs: '1', lg: '1' },
           display: 'flex',
           flexDirection: 'column',
-          gap: 1
+          gap: 1,
+          minHeight: 0
         }}
       >
         <Box 
@@ -250,7 +250,7 @@ const BlinkDetector: React.FC = () => {
             sx={{
               position: 'relative',
               width: '100%',
-              paddingTop: { xs: '75%', md: '100%' }, // Square on desktop for compact view
+              paddingTop: { xs: '56.25%', sm: '75%', lg: '100%' }, // 16:9 on mobile, square on desktop
             }}
           >
             <video
@@ -386,12 +386,11 @@ const BlinkDetector: React.FC = () => {
       {/* Right Column: Stats and Chart */}
       <Box 
         sx={{ 
-          flex: 1,
+          flex: { xs: 'none', lg: 1 },
           display: 'flex',
           flexDirection: 'column',
           gap: 1,
-          overflow: 'auto',
-          minHeight: { xs: 'auto', md: 0 },
+          minHeight: 0, // Allow flex children to shrink
           minWidth: 0 // Prevent flex item from overflowing
         }}
       >

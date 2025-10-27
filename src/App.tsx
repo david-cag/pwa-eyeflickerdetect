@@ -18,11 +18,9 @@ function App() {
       <Box 
         sx={{ 
           minHeight: '100vh',
-          height: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          bgcolor: '#f5f5f5',
-          overflow: 'hidden'
+          bgcolor: '#f5f5f5'
         }}
       >
         <Container 
@@ -32,7 +30,8 @@ function App() {
             px: { xs: 1, sm: 2 },
             flex: 1,
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            pb: { xs: 2, sm: 0 } // Add bottom padding on mobile
           }}
         >
           <Typography 
