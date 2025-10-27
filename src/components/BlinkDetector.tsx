@@ -12,9 +12,9 @@ type CameraStatus = 'idle' | 'requesting' | 'granted' | 'denied' | 'error';
 const BlinkDetector: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isPaused, setIsPaused] = useState(false); // Start with detection active
+  const [isPaused, setIsPaused] = useState(true); // Start paused until camera is ready
   const [lowBlinkThreshold, setLowBlinkThreshold] = useState(10);
-  const [earThreshold, setEarThreshold] = useState(0.20);
+  const [earThreshold, setEarThreshold] = useState(0.25); // Updated default to match the new sensitivity
   const { blinkCount, blinkRate, blinkHistory, faceMeshResults, currentEAR, lowBlinkAlert, setLowBlinkAlert, faceDetected, faceBoundingBox } = useBlinkDetection(videoRef, isPaused, lowBlinkThreshold, earThreshold);
   const [autoZoom, setAutoZoom] = useState(true);
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>('idle');
@@ -37,6 +37,19 @@ const BlinkDetector: React.FC = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setCameraStatus('granted');
+        
+        // Auto-start detection when video begins playing
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play().then(() => {
+              // Start detection automatically once video is playing
+              setTimeout(() => {
+                setIsPaused(false);
+                console.log('Auto-starting blink detection...');
+              }, 1000); // Give MediaPipe time to initialize
+            });
+          }
+        };
       }
     } catch (err) {
       console.error('Error accessing camera:', err);
@@ -312,7 +325,7 @@ const BlinkDetector: React.FC = () => {
                 : '❌ No Face'}
           </Typography>
           <Typography variant="caption" display="block" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, mb: 0.5 }}>
-            EAR: {currentEAR.toFixed(3)} {isPaused ? '⏸️' : faceDetected ? (currentEAR < 0.2 ? '👁️ CLOSED' : '👀 OPEN') : '⏸️'}
+            EAR: {currentEAR.toFixed(3)} {isPaused ? '⏸️' : faceDetected ? (currentEAR < earThreshold ? '👁️ CLOSED' : '👀 OPEN') : '⏸️'}
           </Typography>
           <LinearProgress 
             variant="determinate" 
