@@ -24,13 +24,5 @@ export default defineConfig({
       }
     })
   ],
-  base: '/pwa-eyeflickerdetect/',
-  optimizeDeps: {
-    exclude: ['@mediapipe/face_mesh', '@mediapipe/camera_utils']
-  },
-  build: {
-    commonjsOptions: {
-      exclude: ['@mediapipe/face_mesh', '@mediapipe/camera_utils']
-    }
-  }
+  base: '/pwa-eyeflickerdetect/'
 });
