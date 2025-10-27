@@ -41,7 +41,7 @@ export function useBlinkDetection(
   videoRef: React.RefObject<HTMLVideoElement>, 
   isPaused: boolean, 
   lowBlinkThreshold: number,
-  earThreshold: number = 0.2
+  earThreshold: number = 0.25 // Increased from 0.2 to be more sensitive to partial blinks
 ) {
   const [blinkCount, setBlinkCount] = useState(0);
   const [blinkHistory, setBlinkHistory] = useState<number[]>([]);
@@ -55,8 +55,10 @@ export function useBlinkDetection(
   const blinkTimestampsRef = useRef<number[]>([]);
   const isBlinkingRef = useRef<boolean>(false);
   const lastAlertTimeRef = useRef<number>(0);
-  const CONSECUTIVE_FRAMES = 2; // Number of consecutive frames below threshold to confirm blink
+  const lastBlinkTimeRef = useRef<number>(0);
+  const CONSECUTIVE_FRAMES = 1; // Reduced to 1 frame to catch fast blinks
   const ALERT_COOLDOWN = 60000; // 1 minute between alerts
+  const MIN_BLINK_INTERVAL = 100; // Minimum 100ms between blinks to avoid duplicates
 
   useEffect(() => {
     if (!videoRef.current) return;
@@ -179,43 +181,54 @@ export function useBlinkDetection(
       const avgEAR = (leftEAR + rightEAR) / 2.0;
       setCurrentEAR(avgEAR);
       
-      // Blink detection logic
+      // Blink detection logic - more sensitive approach
       if (avgEAR < earThreshold) {
         framesBelowThreshold++;
         
         // If eyes have been closed for enough consecutive frames and not already blinking
         if (framesBelowThreshold >= CONSECUTIVE_FRAMES && !isBlinkingRef.current) {
-          isBlinkingRef.current = true;
-          
-          // Record blink
           const now = Date.now();
-          blinkTimestampsRef.current.push(now);
-          setBlinkCount((prev) => prev + 1);
-          setBlinkHistory([...blinkTimestampsRef.current]);
           
-          // Calculate blink rate (blinks per minute)
-          const oneMinuteAgo = now - 60000;
-          const recentBlinks = blinkTimestampsRef.current.filter((t) => t > oneMinuteAgo);
-          setBlinkRate(recentBlinks.length);
-          
-          // Check for low blink rate and trigger alert
-          // Only alert if:
-          // 1. Total session blinks >= threshold (avoid initial notifications)
-          // 2. Recent blinks (last minute) > 0 and < threshold (actual low rate detected)
-          // 3. Cooldown period has passed
-          if (blinkTimestampsRef.current.length >= lowBlinkThreshold && 
-              recentBlinks.length > 0 && 
-              recentBlinks.length < lowBlinkThreshold && 
-              now - lastAlertTimeRef.current > ALERT_COOLDOWN) {
-            setLowBlinkAlert(true);
-            lastAlertTimeRef.current = now;
+          // Check if enough time has passed since last blink to avoid duplicates
+          if (now - lastBlinkTimeRef.current >= MIN_BLINK_INTERVAL) {
+            isBlinkingRef.current = true;
+            lastBlinkTimeRef.current = now;
+            
+            // Record blink
+            blinkTimestampsRef.current.push(now);
+            setBlinkCount((prev) => prev + 1);
+            setBlinkHistory([...blinkTimestampsRef.current]);
+            
+            // Calculate blink rate (blinks per minute)
+            const oneMinuteAgo = now - 60000;
+            const recentBlinks = blinkTimestampsRef.current.filter((t) => t > oneMinuteAgo);
+            setBlinkRate(recentBlinks.length);
+            
+            // Check for low blink rate and trigger alert
+            // Only alert if:
+            // 1. Total session blinks >= threshold (avoid initial notifications)
+            // 2. Recent blinks (last minute) > 0 and < threshold (actual low rate detected)
+            // 3. Cooldown period has passed
+            if (blinkTimestampsRef.current.length >= lowBlinkThreshold && 
+                recentBlinks.length > 0 && 
+                recentBlinks.length < lowBlinkThreshold && 
+                now - lastAlertTimeRef.current > ALERT_COOLDOWN) {
+              setLowBlinkAlert(true);
+              lastAlertTimeRef.current = now;
+            }
+            
+            console.log('Blink detected! EAR:', avgEAR.toFixed(3), 'Rate:', recentBlinks.length, 'blinks/min', 'Frames:', framesBelowThreshold);
           }
-          
-          console.log('Blink detected! EAR:', avgEAR.toFixed(3), 'Rate:', recentBlinks.length, 'blinks/min');
         }
       } else {
-        framesBelowThreshold = 0;
-        isBlinkingRef.current = false;
+        // Reset when eyes are open
+        if (framesBelowThreshold > 0) {
+          framesBelowThreshold = 0;
+          // Allow new blinks to be detected after a short delay
+          setTimeout(() => {
+            isBlinkingRef.current = false;
+          }, 50); // 50ms delay to prevent immediate re-detection
+        }
       }
     }
 
